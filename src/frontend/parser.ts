@@ -1,4 +1,4 @@
-import { AssignmentExpr, BinaryExpr, CallExpr, Expr, Identifier, MemberExpr, NumbericLiteral, ObjectLiteral, Program, Property, Stmt, VarDeclaration } from "./ast";
+import { AssignmentExpr, BinaryExpr, CallExpr, Expr, FunctionDeclaration, Identifier, MemberExpr, NumbericLiteral, ObjectLiteral, Program, Property, ReturnStatement, Stmt, VarDeclaration } from "./ast";
 import { Token, tokenize, TokenType } from "./lexer";
 
 
@@ -48,6 +48,10 @@ export default class Parser {
       case TokenType.Let:
       case TokenType.Const:
         return this.parseVarDeclaration()
+      case TokenType.Fn:
+        return this.parseFuDeclaration()
+      case TokenType.Return:
+        return this.parseReturnStmt()
       default:
         return this.parseExpr()
     }
@@ -56,7 +60,7 @@ export default class Parser {
   // 两种语法
   // LET IDENT;
   // (LET | CONST) = EXPR;
-  parseVarDeclaration() {
+  private parseVarDeclaration(): Stmt {
     const isConstant = this.eat().type === TokenType.Const
     this.expect(TokenType.Identifier, "Expected identifier name following let | const keywords.")
     const identifier = this.eat().value
@@ -87,6 +91,53 @@ export default class Parser {
       identifier,
       value
     } as VarDeclaration
+  }
+
+  private parseFuDeclaration(): Stmt {
+    this.eat()  // eat fn keyword
+    this.expect(TokenType.Identifier, "Expected function name following fn keyword")
+    const name = this.eat().value
+
+    const args = this.parseArgs()
+    const params: string[] = []
+    for (const arg of args) {
+      if (arg.kind !== 'Identifier') {
+        console.log(arg)
+        throw 'Inside function declaration expected parameters to be of type string.'
+      }
+
+      params.push((arg as Identifier).symbol)
+    }
+
+    this.expect(TokenType.OpenBrace, "Expected function body following declation")
+    this.eat() // eat {
+    
+    const body: Stmt[] = []
+
+    while(this.at().type !== TokenType.EOF && this.at().type !== TokenType.CloseBrace) {
+      body.push(this.parseStmt())
+    }
+
+    this.expect(TokenType.CloseBrace, "Closing brace expected inside function declaration")
+    this.eat() // eat }
+    const fn = {
+      kind: 'FunctionDeclaration',
+      parameters: params,
+      name,
+      body
+    } as FunctionDeclaration
+
+    return fn
+  }
+
+  private parseReturnStmt(): Stmt {
+    this.eat() // eat return keyword
+    const argument = this.parseExpr()
+
+    return {
+      kind: 'ReturnStatement',
+      argument
+    } as ReturnStatement
   }
 
   // 越向下优先级越高，赋值表达式 = 两侧都是表达式，因此要先计算表达式的值，因此加法表达式比赋值表达式优先级高

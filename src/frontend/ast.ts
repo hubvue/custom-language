@@ -3,6 +3,8 @@ export type NodeType =
   // STATEMENTS
   | 'Program'
   | 'VarDeclaration'
+  | 'FunctionDeclaration'
+  | 'ReturnStatement'
 
   // EXPRESSIONS
   // | 'NullLiteral'
@@ -30,6 +32,20 @@ export interface VarDeclaration extends Stmt {
   constant: boolean,
   identifier: string
   value?: Expr
+}
+
+export interface FunctionDeclaration extends Stmt {
+  kind: 'FunctionDeclaration',
+  parameters: string[],   // 其实每一个形参的类型都是Identifier，暂用string
+  name: string,
+  body: Stmt[],             //    BlockStatement
+  // async: boolean,         //   是否是async函数
+  // arrow: boolean,         //   是否是箭头函数
+}
+
+export interface ReturnStatement extends Stmt {
+  kind: 'ReturnStatement',
+  argument: Stmt
 }
 
 export interface Expr extends Stmt {}

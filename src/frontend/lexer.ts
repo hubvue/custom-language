@@ -16,8 +16,12 @@ export enum TokenType {
   OpenParen,  // (
   CloseParen, // )
   BinaryOperator,  // 二元运算符
+
   Let,         // let
   Const,       // const
+  Fn,          // fn
+  Return,      // return
+
   EOF, // 文件结束标识
 }
 
@@ -28,7 +32,9 @@ export interface Token {
 
 const KEYWORDS: Record<string, TokenType> = {
   'let': TokenType.Let,
-  'const': TokenType.Const
+  'const': TokenType.Const,
+  'fn': TokenType.Fn,
+  'return': TokenType.Return
   // 'null': TokenType.Null
 }
 
