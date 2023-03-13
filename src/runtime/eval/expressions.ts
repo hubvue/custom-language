@@ -1,7 +1,7 @@
 import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, ObjectLiteral } from "../../frontend/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { makeNull, makeNumber, makeObject, NativeFunctionVal, NumberVal, RuntimeVal } from "../values";
+import { FunctionVal, makeNull, makeNumber, makeObject, NativeFunctionVal, NumberVal, RuntimeVal } from "../values";
 
 export function evalNumbericBinaryExpr(lhs: NumberVal, rhs: NumberVal, operator: string): NumberVal {
   let result = 0;
@@ -59,12 +59,31 @@ export function evalObjectLiteral(node: ObjectLiteral, env: Environment): Runtim
 
 
 export function evalCallExpr(node: CallExpr, env: Environment): RuntimeVal {
-  const caller = evaluate(node.caller, env)
-  if (caller.type !== 'native-fn') {
-    throw `${JSON.stringify(node.caller)} is not function`
+  const fn = evaluate(node.caller, env)
+  const args = node.args.map(arg => evaluate(arg, env))
+  if (fn.type === 'native-fn') {
+    return (fn as NativeFunctionVal).call(args, env)
   }
 
-  const args = node.args.map(arg => evaluate(arg, env))
+  if (fn.type === 'function') {
+    const func = fn as FunctionVal
+    const scope = new Environment(func.declarationEnv)
 
-  return (caller as NativeFunctionVal).call(args, env)
+    // Create the variables for the parameters list
+    for (let i = 0; i < func.parameters.length; i ++) {
+      // TODO: 形参实参不一致情况，check边界
+      const varname = func.parameters[i]
+      scope.declareVar(varname, args[i], false)
+    }
+
+    let result: RuntimeVal = makeNull()
+    // evalutate the function body line by line
+    for (const stmt of func.body) {
+      result = evaluate(stmt, scope)
+    }
+
+    return result
+  }
+  
+  throw `${JSON.stringify(node.caller)} is not function`
 }

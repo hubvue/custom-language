@@ -1,7 +1,7 @@
 import { ValueType, RuntimeVal, NumberVal, NullVal, makeNumber, makeNull } from './values'
-import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, NodeType, NumbericLiteral, ObjectLiteral, Program, Stmt, VarDeclaration } from '../frontend/ast'
+import { AssignmentExpr, BinaryExpr, CallExpr, FunctionDeclaration, Identifier, NodeType, NumbericLiteral, ObjectLiteral, Program, Stmt, VarDeclaration } from '../frontend/ast'
 import Environment from './environment'
-import { evalProgram, evalVarDeclaration } from './eval/statements'
+import { evalFunctionDeclaration, evalProgram, evalVarDeclaration } from './eval/statements'
 import { evalAssignment, evalBinaryExpr, evalCallExpr, evalIdentifier, evalObjectLiteral } from './eval/expressions'
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
@@ -33,8 +33,10 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
       return evalProgram(astNode as Program, env)
 
     case 'VarDeclaration':
-
       return evalVarDeclaration(astNode as VarDeclaration, env)
+    
+    case 'FunctionDeclaration':
+      return evalFunctionDeclaration(astNode as FunctionDeclaration, env)
 
     default:
       console.error("This AST Node has not yet been setup fro interpretation", JSON.stringify(astNode, null, 2))
